@@ -1,0 +1,5 @@
+#!ipxe
+dhcp
+# Insert your own server here. You must make sure your certificate authority root's
+# certificate is added to the iPXE boot disk image.
+chain https://vapr.heresjono.com:4747/boot/entry
