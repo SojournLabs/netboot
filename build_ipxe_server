@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+docker run --rm \
+    -v `pwd`/boot_server:/usr/src/myapp \
+    -v `pwd`/build/boot_server:/vapr/build \
+    -w /usr/src/myapp \
+    sojournlabs/golang \
+    go build -v -o /vapr/build/bootserver
