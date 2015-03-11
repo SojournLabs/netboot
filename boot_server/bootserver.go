@@ -112,5 +112,5 @@ func getRemoteIP(r *http.Request) (string) {
 func main() {
     http.HandleFunc("/template/", templateHandler)
     http.HandleFunc("/images/", imageHandler)
-    http.ListenAndServe("localhost:8800", nil)
+    http.ListenAndServe(":8800", nil)
 }

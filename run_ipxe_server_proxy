@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Default values
+# Certificate store directory
+VAPR_CERTSTORE=${VAPR_CERTS_DIR:=`pwd`/../certstore}
+# Root certificate authority certificate location
+VAPR_CAROOT=${VAPR_CAROOT:=${VAPR_CERTSTORE}/ca.crt}
+
+# Server certificate.
+VAPR_SERVER_CERT=${VAPR_SERVER_CERT:=${VAPR_CERTSTORE}/ipxeserver.crt}
+# Server key.
+VAPR_SERVER_KEY=${VAPR_CLIENT_KEY:=ipxe_server_proxy.config/ipxeserver.key}
+
+###
+if [ ! -f ${VAPR_CAROOT} ]; then
+    echo "Unable to locate root certificate authority certificate file."
+    exit 1
+fi
+
+# Set up server authentication.
+if ! [[ -f ${VAPR_SERVER_CERT} && -f ${VAPR_SERVER_KEY} ]]; then
+    tput bold; tput setaf 1
+    printf "Error: "
+    tput sgr0
+    echo Missing server certificate or key.
+    exit 1
+fi
+
+DOCKER_DAEMONIZE=TRUE DOCKER_FLAGS="-v `pwd`/ipxe_server_proxy.config/conf.d:/etc/nginx/conf.d:ro -p 4730:80 -p 4747:443 --link boot_server:boot_server" VAPR_DATA_DIR_config=`pwd`/ipxe_server_proxy.config ./dockertools/bin/run boot_proxy.docker boot_proxy

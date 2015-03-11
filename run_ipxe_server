@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Default values
+# Root certificate authority certificate location
+VAPR_CAROOT=${VAPR_CAROOT:=${VAPR_CERTSTORE}/ca.crt}
+
+# iPXE server location
+VAPR_IPXE_SERVER=${VAPR_IPXE_SERVER:=build/boot_server/bootserver}
+
+###
+if [ ! -f ${VAPR_CAROOT} ]; then
+    echo "Unable to locate root certificate authority certificate file."
+    exit 1
+fi
+
+if [ ! -f ${VAPR_IPXE_SERVER} ]; then
+    echo "Unable to locate iPXE boot server."
+    exit 1
+fi
+
+DOCKER_DAEMONIZE=TRUE DOCKER_FLAGS="--name boot_server" VAPR_DATA_DIR_server_root=`pwd`/ipxe_server.config VAPR_DATA_DIR_server=`pwd`/build/boot_server ./dockertools/bin/run boot_server.docker boot_server

@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 # Default values
+# Certificate store directory
+VAPR_CERTSTORE=${VAPR_CERTS_DIR:=`pwd`/../certstore}
 # Root certificate authority certificate location
-VAPR_CAROOT=${VAPR_CAROOT:=config/cacert.pem}
+VAPR_CAROOT=${VAPR_CAROOT:=${VAPR_CERTSTORE}/ca.crt}
+
 # iPXE boot script location
-VAPR_IPXE_BOOTSCRIPT=${VAPR_IPXE_BOOTSCRIPT:=config/bootscript.ipxe}
+VAPR_IPXE_BOOTSCRIPT=${VAPR_IPXE_BOOTSCRIPT:=ipxe_client.config/bootscript.ipxe}
+
 # Client certificate for client authentication (optional)
-VAPR_CLIENT_CERT=${VAPR_CLIENT_CERT:=config/ipxeclient.crt}
+VAPR_CLIENT_CERT=${VAPR_CLIENT_CERT:=${VAPR_CERTSTORE}/ipxeclient.crt}
 # Client key for client authentication (optional)
-VAPR_CLIENT_KEY=${VAPR_CLIENT_KEY:=config/ipxeclient.key}
+VAPR_CLIENT_KEY=${VAPR_CLIENT_KEY:=ipxe_client.config/ipxeclient.key}
 
 ###
 if [ ! -f ${VAPR_CAROOT} ]; then
@@ -20,19 +24,9 @@ if [ ! -f ${VAPR_IPXE_BOOTSCRIPT} ]; then
     exit 1
 fi
 
-if ! mkdir tmp; then
-    echo Unable to create temporary directory.
-    exit 1
-fi
-
-cp ${VAPR_CAROOT} tmp
-cp ${VAPR_IPXE_BOOTSCRIPT} tmp
-
 # Set up client authentication.
 if [[ -f ${VAPR_CLIENT_CERT} && -f ${VAPR_CLIENT_KEY} ]]; then
-    cp ${VAPR_CLIENT_CERT} tmp/ipxeclient.crt
-    cp ${VAPR_CLIENT_KEY} tmp/ipxeclient.key
-    CLIENT_AUTH="CERT=/vapr/config/ipxeclient.crt PRIVKEY=/vapr/config/ipxeclient.key"
+    CLIENT_AUTH="CERT=/vapr/certstore/ipxeclient.crt PRIVKEY=/vapr/config/ipxeclient.key"
 else
     tput bold; tput setaf 3
     printf "WARNING: "
@@ -40,5 +34,4 @@ else
     echo No client authentication enabled.
 fi
 
-VAPR_DATA_DIR_config=`pwd`/tmp VAPR_DATA_DIR_build=`pwd`/build/boot_images ./dockertools/bin/run ipxe_builder.docker ipxe_builder bash -c "make -C ipxe/src EMBED=/vapr/config/bootscript.ipxe TRUST=/vapr/config/cacert.pem ${CLIENT_AUTH}; for FILENAME in ipxe.iso ipxe.dsk ipxe.usb; do cp ipxe/src/bin/\$FILENAME build; done"
-rm -Rf tmp
+VAPR_DATA_DIR_config=`pwd`/ipxe_client.config VAPR_DATA_DIR_build=`pwd`/build/boot_images ./dockertools/bin/run ipxe_builder.docker ipxe_builder bash -c "make -C ipxe/src EMBED=/vapr/config/bootscript.ipxe TRUST=/vapr/certstore/ca.crt ${CLIENT_AUTH}; for FILENAME in ipxe.iso ipxe.dsk ipxe.usb; do cp ipxe/src/bin/\$FILENAME build; done"
