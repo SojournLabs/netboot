@@ -13,6 +13,8 @@ WORKDIR /vapr/ipxe/src
 # Enable HTTPS and image signing.
 RUN sed -i 's/undef\tDOWNLOAD_PROTO_HTTPS/define\tDOWNLOAD_PROTO_HTTPS/' config/general.h
 RUN sed -i 's|//#define IMAGE_TRUST_CMD|#define\tIMAGE_TRUST_CMD|' config/general.h
+RUN sed -i 's|//#define IMAGE_TRUST_CMD|#define\tIMAGE_TRUST_CMD|' config/general.h
+RUN sed -i 's|//#define PING_CMD|#define\tPING_CMD|' config/general.h
 # Do a preliminary build to save time later.
 RUN make
 WORKDIR /vapr
