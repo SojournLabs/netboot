@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # Default values
-# Root certificate authority certificate location
-VAPR_CAROOT=${VAPR_CAROOT:=${VAPR_CERTSTORE}/ca.crt}
 
 # iPXE server location
 if [ ! -f build/boot_server/bootserver ]; then
@@ -11,19 +9,14 @@ else
 fi
 
 if [ ! -d ipxe_server.config ]; then
-    VAPRDATA_DIRRO_server_root=${VAPRDATA_DIRRO_server_root:=$(cd ~core; pwd)/ipxe_server.config}
+    export VAPRDATA_DIRRO_server_root=${VAPRDATA_DIRRO_server_root:=$(cd ~core; pwd)/ipxe_server.config}
 else
-    VAPRDATA_DIRRO_server_root=${VAPRDATA_DIRRO_server_root:=ipxe_server.config}
+    export VAPRDATA_DIRRO_server_root=${VAPRDATA_DIRRO_server_root:=ipxe_server.config}
 fi
 
-export VAPR_DATA_DIRRO_server=$(cd $(dirname VAPR_IPXE_SERVER); pwd)
+export VAPR_DATA_DIRRO_server=$(cd $(dirname ${VAPR_IPXE_SERVER}); pwd)
 
 ###
-if [ ! -f ${VAPR_CAROOT} ]; then
-    echo "Unable to locate root certificate authority certificate file."
-    exit 1
-fi
-
 if [ ! -f ${VAPR_IPXE_SERVER} ]; then
     echo "Unable to locate iPXE boot server."
     exit 1
