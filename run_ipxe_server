@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+SCRIPT_DIR=$(cd $(dirname $0); pwd)
+
 # Default values
 
 # iPXE server location
@@ -8,10 +10,10 @@ else
     VAPR_IPXE_SERVER=${VAPR_IPXE_SERVER:=build/boot_server/bootserver}
 fi
 
-if [ ! -d ipxe_server.config ]; then
-    export VAPRDATA_DIRRO_server_root=${VAPRDATA_DIRRO_server_root:=$(cd ~core; pwd)/ipxe_server.config}
+if [ -d ipxe_server.config ]; then
+    export VAPRDATA_DIRRO_server_root=${VAPRDATA_DIRRO_server_root:=`pwd`/ipxe_server.config}
 else
-    export VAPRDATA_DIRRO_server_root=${VAPRDATA_DIRRO_server_root:=ipxe_server.config}
+    export VAPRDATA_DIRRO_server_root=${VAPRDATA_DIRRO_server_root:=$(cd ~core; pwd)/ipxe_server.config}
 fi
 
 export VAPR_DATA_DIRRO_server=$(cd $(dirname ${VAPR_IPXE_SERVER}); pwd)
@@ -22,4 +24,4 @@ if [ ! -f ${VAPR_IPXE_SERVER} ]; then
     exit 1
 fi
 
-DOCKER_DAEMONIZE=TRUE DOCKER_FLAGS="--name boot_server" ./dockertools/bin/run boot_server.docker boot_server
+DOCKER_DAEMONIZE=TRUE DOCKER_FLAGS="--name boot_server" ${SCRIPT_DIR}/dockertools/bin/run boot_server.docker boot_server

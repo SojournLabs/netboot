@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+SCRIPT_DIR=$(cd $(dirname $0); pwd)
+
 # Default values
 # Certificate store directory
 if [ -d certstore ]; then
@@ -33,4 +35,4 @@ if ! [[ -f ${VAPR_SERVER_CERT} && -f ${VAPR_SERVER_KEY} ]]; then
     exit 1
 fi
 
-DOCKER_DAEMONIZE=TRUE DOCKER_FLAGS="-v ${VAPR_DATA_DIR_config}/conf.d:/etc/nginx/conf.d:ro -p 4730:80 -p 4747:443 --link boot_server:boot_server" ./dockertools/bin/run boot_proxy.docker boot_proxy
+DOCKER_DAEMONIZE=TRUE DOCKER_FLAGS="-v ${VAPR_DATA_DIR_config}/conf.d:/etc/nginx/conf.d:ro -p 4730:80 -p 4747:443 --link boot_server:boot_server" ${SCRIPT_DIR}/dockertools/bin/run boot_proxy.docker boot_proxy
