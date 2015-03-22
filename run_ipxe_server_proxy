@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
 # Default values
 # Certificate store directory
-VAPR_CERTSTORE=${VAPR_CERTS_DIR:=`pwd`/../certstore}
+if [ -d certstore ]; then
+    export VAPR_CERTSTORE=${VAPR_CERTS_DIR:=`pwd`/certstore}
+else
+    export VAPR_CERTSTORE=${VAPR_CERTS_DIR:=`pwd`/../certstore}
+fi
+
 # Root certificate authority certificate location
 VAPR_CAROOT=${VAPR_CAROOT:=${VAPR_CERTSTORE}/ca.crt}
 
+export VAPR_DATA_DIR_config=${VAPR_DATA_DIR_config:=`pwd`/ipxe_server_proxy.config}
+
 # Server certificate.
 VAPR_SERVER_CERT=${VAPR_SERVER_CERT:=${VAPR_CERTSTORE}/ipxeserver.crt}
+
 # Server key.
-VAPR_SERVER_KEY=${VAPR_CLIENT_KEY:=ipxe_server_proxy.config/ipxeserver.key}
+VAPR_SERVER_KEY=${VAPR_DATA_DIR_config}/ipxeserver.key
 
 ###
 if [ ! -f ${VAPR_CAROOT} ]; then
@@ -25,4 +33,4 @@ if ! [[ -f ${VAPR_SERVER_CERT} && -f ${VAPR_SERVER_KEY} ]]; then
     exit 1
 fi
 
-DOCKER_DAEMONIZE=TRUE DOCKER_FLAGS="-v `pwd`/ipxe_server_proxy.config/conf.d:/etc/nginx/conf.d:ro -p 4730:80 -p 4747:443 --link boot_server:boot_server" VAPR_DATA_DIR_config=`pwd`/ipxe_server_proxy.config ./dockertools/bin/run boot_proxy.docker boot_proxy
+DOCKER_DAEMONIZE=TRUE DOCKER_FLAGS="-v ${VAPR_DATA_DIR_config}/conf.d:/etc/nginx/conf.d:ro -p 4730:80 -p 4747:443 --link boot_server:boot_server" ./dockertools/bin/run boot_proxy.docker boot_proxy
