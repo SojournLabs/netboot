@@ -1,0 +1,9 @@
+[Match]
+Virtualization=oracle
+Name=enp0s8
+
+[Network]
+Address=192.168.56.2/24
+DNS=x.x.x.10
+DNS=x.x.x.11 
+DNS=8.8.8.8
