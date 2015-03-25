@@ -12,7 +12,7 @@ After=cryptsetup-pre.target
 Before=cryptsetup.target
 BindsTo=dev-sda.device
 After=dev-sda.device
-Before=local-fs.target
+Before=umount.target
 
 [Service]
 Type=oneshot

@@ -4,7 +4,7 @@
 SourcePath=/etc/fstab
 Documentation=man:fstab(5) man:systemd-fstab-generator(8)
 After=systemd-cryptsetup@enc.service
-Before=local-fs.target
+Before=umount.target
 
 [Mount]
 What=/dev/mapper/enc

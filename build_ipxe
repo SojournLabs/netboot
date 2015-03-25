@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Default values
+
 # Certificate store directory
-VAPR_CERTSTORE=${VAPR_CERTS_DIR:=`pwd`/../certstore}
+export VAPR_CERTSTORE=${VAPR_CERTS_DIR:=`pwd`/../certstore}
 # Root certificate authority certificate location
 VAPR_CAROOT=${VAPR_CAROOT:=${VAPR_CERTSTORE}/ca.crt}
 

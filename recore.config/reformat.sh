@@ -16,3 +16,6 @@ cp -R /var/* /btrfs/var
 cp -R /etc/* /btrfs/etc
 cp -R /home/* /btrfs/home
 cp -R /root/* /btrfs
+
+# Set up nameservers
+cp /usr/share/resolv.conf.head /btrfs/etc
