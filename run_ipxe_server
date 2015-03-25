@@ -24,4 +24,6 @@ if [ ! -f ${VAPR_IPXE_SERVER} ]; then
     exit 1
 fi
 
+# Remove any existing instances
+docker rm boot_server
 DOCKER_DAEMONIZE=TRUE DOCKER_FLAGS="--name boot_server" ${SCRIPT_DIR}/dockertools/bin/run boot_server.docker boot_server
