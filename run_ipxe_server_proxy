@@ -37,4 +37,4 @@ fi
 
 # Remove existing instances.
 docker rm boot_proxy
-DOCKER_DAEMONIZE=TRUE DOCKER_FLAGS="-v ${VAPR_DATA_DIR_config}/conf.d:/etc/nginx/conf.d:ro -p 4730:80 -p 4747:443 --link boot_server:boot_server" ${SCRIPT_DIR}/dockertools/bin/run boot_proxy.docker boot_proxy
+DOCKER_DAEMONIZE=TRUE DOCKER_FLAGS="-v ${VAPR_DATA_DIR_config}/conf.d:/etc/nginx/conf.d:ro -v ${VAPR_DATA_DIR_config}/boot_users:/etc/nginx/boot_users:ro -p 4730:80 -p 4747:443 --link boot_server:boot_server" ${SCRIPT_DIR}/dockertools/bin/run boot_proxy.docker boot_proxy
