@@ -1,38 +1,27 @@
 #!/usr/bin/env bash
-# Default values
+# Create an iPXE boot disk that tries to connect to a series of servers to grab a signed
+# kernel and, secondly, configuration files via an encrypted boot server
+# (see https://github.com/SojournLabs/netboot/tree/master/boot_server).
+#
+# Usage:
+#     TLS_KEY=path/to/key $0 imageserver1 templateserver1 imageserver2 templateserver2 ...
+#
+# Image servers contain signed kernels while template servers serve up configuration
+# information.
+#
+# Assumes the environment variable VAPR_CERTSTORE is set to the directory containing
+# certificates, including the root CA at ca.crt. These are set as part of vapr
+# (https://github.com/SojournLabs/vapr), although you can set them manually.
 
-# Certificate store directory
-export VAPR_CERTSTORE=${VAPR_CERTS_DIR:=`pwd`/../certstore}
-# Root certificate authority certificate location
-VAPR_CAROOT=${VAPR_CAROOT:=${VAPR_CERTSTORE}/ca.crt}
-
-# iPXE boot script location
-VAPR_IPXE_BOOTSCRIPT=${VAPR_IPXE_BOOTSCRIPT:=ipxe_client.config/bootscript.ipxe}
-
-# Client certificate for client authentication (optional)
-VAPR_CLIENT_CERT=${VAPR_CLIENT_CERT:=${VAPR_CERTSTORE}/ipxeclient.crt}
-# Client key for client authentication (optional)
-VAPR_CLIENT_KEY=${VAPR_CLIENT_KEY:=ipxe_client.config/ipxeclient.key}
-
-###
-if [ ! -f ${VAPR_CAROOT} ]; then
-    echo "Unable to locate root certificate authority certificate file."
+if [[ "${TLS_KEY}" == "" ]]; then
+    echo "No key file specified using environment variable TLS_KEY."
     exit 1
 fi
 
-if [ ! -f ${VAPR_IPXE_BOOTSCRIPT} ]; then
-    echo "Unable to locate iPXE boot script."
-    exit 1
-fi
+KEY_FILE=$(cd $(dirname "${TLS_KEY}"); pwd)/$(basename "${TLS_KEY}")
 
-# Set up client authentication.
-if [[ -f ${VAPR_CLIENT_CERT} && -f ${VAPR_CLIENT_KEY} ]]; then
-    CLIENT_AUTH="CERT=/vapr/certstore/ipxeclient.crt PRIVKEY=/vapr/config/ipxeclient.key"
-else
-    tput bold; tput setaf 3
-    printf "WARNING: "
-    tput sgr0
-    echo No client authentication enabled.
-fi
-
-VAPR_DATA_DIR_config=`pwd`/ipxe_client.config VAPR_DATA_DIR_build=`pwd`/build/boot_images ./dockertools/bin/run ipxe_builder.docker ipxe_builder bash -c "make -C ipxe/src EMBED=/vapr/config/bootscript.ipxe TRUST=/vapr/certstore/ca.crt ${CLIENT_AUTH}; for FILENAME in ipxe.iso ipxe.dsk ipxe.usb; do cp ipxe/src/bin/\$FILENAME build; done"
+docker run --rm -t -i \
+    -v "${VAPR_CERTSTORE:=`pwd`/certstore}":/vapr/certstore:ro \
+    -v "${KEY_FILE}":/vapr/keys/$(basename "${KEY_FILE}"):ro \
+    -v "${VAPR_BUILDDIR:=`pwd`}":/vapr/build \
+    sojournlabs/ipxe_builder "$@"

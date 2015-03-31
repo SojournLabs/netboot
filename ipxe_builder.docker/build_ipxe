@@ -1,0 +1,75 @@
+#!/usr/bin/env sh
+# Usage:
+#     $0 imgserver1 templateserver1 imgserver2 templateserver2 ...
+
+keyname() {
+    # Output the base name of the key-certificate files pair.
+    # Assume keyfile names never end in newline characters.
+    keyname_KEYFILE_NAME=$(ls /vapr/keys)
+    printf %s "${keyname_KEYFILE_NAME%.*}"
+}
+
+gen_ipxe_script() {
+    cat <<EOF
+#!ipxe
+dhcp
+imgtrust
+
+EOF
+
+    IDX=0
+    while [ $# -gt 1 ]; do
+        cat <<EOF
+:srv_${IDX}
+set imgserver ${1}
+set templateserver ${2}
+set next_src srv_$((${IDX}+1))
+goto try_boot
+EOF
+        eval "IDX=$((${IDX}+1))"
+        shift 2
+    done
+
+    cat <<EOF
+:srv_${IDX}
+echo Failed to find valid boot source.
+shell
+
+:try_boot
+imgfetch -t 500 \${imgserver}/entry.ipxe || goto \${next_src}
+imgverify entry.ipxe \${imgserver}/entry.ipxe.sig || goto \${next_src}
+chain entry.ipxe || goto \${next_src}
+EOF
+
+
+}
+
+# Validate arguments
+if [ $(($# % 2)) -eq 1 ]; then
+    echo "ERROR: Odd number of image/template server sources provided."
+    exit 1
+fi
+
+if [ ! -f /vapr/certstore/ca.crt ]; then
+    echo "Unable to locate root certificate authority certificate file."
+    exit 1
+fi
+
+# Set up client authentication.
+if [ -f /vapr/certstore/"$(keyname)".crt ] && [ -f /vapr/keys/"$(keyname)".key ]; then
+    # We don't support keynames with whitespace.
+    CLIENT_AUTH="CERT=/vapr/certstore/$(keyname).crt PRIVKEY=/vapr/keys/$(keyname).key"
+else
+    tput bold; tput setaf 3
+    printf "WARNING: "
+    tput sgr0
+    echo No client authentication enabled.
+fi
+
+gen_ipxe_script "$@" > /tmp/bootscript.ipxe
+
+make -C ipxe/src EMBED=/tmp/bootscript.ipxe TRUST=/vapr/certstore/ca.crt ${CLIENT_AUTH}
+
+for FILENAME in ipxe.iso ipxe.usb; do
+    cp ipxe/src/bin/$FILENAME build;
+done
