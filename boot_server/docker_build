@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Build bootserver in a Docker environment.
+SCRIPT_DIR=$(cd $(dirname "$0"); pwd)
+
+docker run --rm \
+    -v $(printf "%q" "${SCRIPT_DIR}"):/usr/src/myapp \
+    -v "$(pwd)":/vapr/build \
+    -w /usr/src/myapp \
+    sojournlabs/golang \
+    go build -v -o /vapr/build/bootserver
