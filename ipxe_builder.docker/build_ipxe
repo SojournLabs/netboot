@@ -66,6 +66,11 @@ else
     echo No client authentication enabled.
 fi
 
+if [ $# -eq 0 ]; then
+    echo "No image or template servers provided."
+    exit 1
+fi
+
 gen_ipxe_script "$@" > /tmp/bootscript.ipxe
 
 make -C ipxe/src EMBED=/tmp/bootscript.ipxe TRUST=/vapr/certstore/ca.crt ${CLIENT_AUTH}

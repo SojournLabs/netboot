@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+# Copy in our certificate.
+# Use dhcpcd (which allows releasing leases) instead of the default dhcp client.
+# Use OpenDNS and Google DNS.
+# Set up a static ip addresses.
+# Mount a btrfs drive into /home, /var, /etc, and /root.
+# Insert the bootserver binary.
+
+unpack_disk() {
+    mkdir "${TMP_DIR}"/{initrd,squashfs};
+    cd "${TMP_DIR}"/initrd; 
+    zcat "${SOURCE_DIR}"/coreos_production_pxe_image.cpio.gz | cpio -id;
+    cd ../squashfs; unsquashfs ../initrd/usr.squashfs;
+    rm ../initrd/usr.squashfs;
+}
+
+pack_disk() {
+    cd "${TMP_DIR}"/squashfs;
+    mksquashfs squashfs-root/ ../initrd/usr.squashfs  -noappend -always-use-fragments;
+    cd ../initrd; find . | cpio -o -H newc | gzip > "${TARGET_DIR}"/${ROLE}.cpio.gz
+}
+
+paranoia() {
+    if [[ "${PARANOID}" == "TRUE" ]]; then
+    rm -Rf "${DISK_ROOT}"/share/ca-certificates/*;
+    fi;
+}
+
+sync_dir() {
+    cd "${DISK_ROOT}"
+    if [ -d "${1}" ]; then
+        tar cvf - -C "${1}" . | tar xvf -
+    fi
+}
+
+certificates() {
+    cd "${DISK_ROOT}"
+    cat /vapr/certstore/ca.crt >> ./share/ca-certificates/caroot.pem;
+    echo -e "L\\t/etc/ssl/certs/caroot.pem\\t-\\t-\\t-\\t-\\t../../../usr/share/ca-certificates/caroot.pem" >> ./lib/tmpfiles.d/ca-certificates.conf
+    echo -e "L\\t/etc/ssl/certs/$(openssl x509 -noout -hash -in /vapr/certstore/ca.crt).0\\t-\\t-\\t-\\t-\\tcaroot.pem" >> ./lib/tmpfiles.d/ca-certificates.conf
+    cp /vapr/certstore/ca.crt ./share/ca-certificates/$(openssl x509 -noout -hash -in /vapr/certstore/ca.crt).0;
+}
+
+SOURCE_DIR=/vapr/images
+TMP_DIR=/tmp
+DISK_ROOT="${TMP_DIR}/squashfs/squashfs-root"
+TARGET_DIR=/vapr/build
+export PLATFORM="${PLATFORM-metal}"
+export ROLE="${1-bootserver}"
+
+unpack_disk
+
+paranoia
+
+cd "${DISK_ROOT}"
+# Remove the built-in DHCP service.
+rm lib/systemd/network/zz-default.network;
+
+sync_dir /vapr/profiles/generic
+if [ -f /vapr/profiles/generic.sh ]; then
+    /vapr/profiles/generic.sh
+fi
+
+sync_dir /vapr/profiles/"${ROLE}"
+if [ -f /vapr/profiles/"${ROLE}".sh ]; then
+    /vapr/profiles/"${ROLE}".sh
+fi
+
+sync_dir /vapr/profiles/"${ROLE}-${PLATFORM}"
+if [ -f /vapr/profiles/"${ROLE}-${PLATFORM}".sh ]; then
+    /vapr/profiles/"${ROLE}-${PLATFORM}".sh
+fi
+
+sync_dir /vapr/profiles/"-${PLATFORM}"
+if [ -f /vapr/profiles/"-${PLATFORM}".sh ]; then
+    /vapr/profiles/-"${PLATFORM}".sh
+fi
+
+certificates
+
+pack_disk
+
+if [ ! -f "${TARGET_DIR}"/${ROLE}.vmlinuz ]; then
+    cp "${SOURCE_DIR}"/coreos_production_pxe.vmlinuz "${TARGET_DIR}"/${ROLE}.vmlinuz
+    rm "${TARGET_DIR}"/${ROLE}.vmlinuz.sig
+fi

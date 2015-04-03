@@ -1,0 +1,6 @@
+[Match]
+Name=en*
+Virtualization=false
+
+[Network]
+Address=192.168.0.80/24
