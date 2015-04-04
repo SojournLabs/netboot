@@ -1,3 +1,0 @@
-[submodule "dockertools"]
-	path = dockertools
-	url = https://github.com/SojournLabs/dockertools.git
