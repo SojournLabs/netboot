@@ -3,6 +3,6 @@
 FROM nginx
 MAINTAINER jonathan lung <vapr@sojournlabs.com>
 WORKDIR /vapr
-ADD boot.conf /etc/nginx/sites-enabled/boot.conf
+ADD boot.conf /etc/nginx/conf.d/default.conf
 VOLUME ["/vapr/certstore", "/vapr/keys"]
 CMD ["nginx", "-g", "daemon off;"]
